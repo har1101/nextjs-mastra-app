@@ -1,0 +1,9 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "nextjs-mastra-app"
+resolve_s3 = true
+s3_prefix = "nextjs-mastra-app"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+image_repositories = ["StreamingNextjsFunction=975050047634.dkr.ecr.us-east-1.amazonaws.com/nextjsmastraapp8f328dbf/streamingnextjsfunctiona4f2f287repo"]

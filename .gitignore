@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cursor
+.cursorrules
+.cursor/mcp.json
+
+# aws
+.aws-sam
