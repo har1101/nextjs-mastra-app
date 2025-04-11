@@ -18,6 +18,10 @@ Resources:
       Environment:
         Variables:
           AWS_LWA_INVOKE_MODE: response_stream
+          BRAVE_API_KEY: put-your-value
+          LANGFUSE_PUBLIC_KEY: put-your-value
+          LANGFUSE_SECRET_KEY: put-your-value
+          LANGFUSE_BASE_URL: put-your-value
       FunctionUrlConfig:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM
