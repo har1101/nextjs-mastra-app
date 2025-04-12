@@ -163,7 +163,8 @@ export async function POST(req: NextRequest) {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
+      "Connection": "keep-alive",
+      "Transfer-Encoding": "chunked",
     },
   });
 }

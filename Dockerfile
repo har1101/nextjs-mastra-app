@@ -12,7 +12,7 @@ COPY . .
 RUN npm run build
 
 FROM base AS runner
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.0 /lambda-adapter /opt/extensions/lambda-adapter
 
 # Lambdaの権限問題を解決するための環境変数
 ENV PORT=3000 NODE_ENV=production
