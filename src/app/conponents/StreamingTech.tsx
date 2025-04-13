@@ -35,6 +35,7 @@ export function StreamingTech() {
     if (trace.startsWith('観察:')) return 'observation';
     if (trace.startsWith('推論:')) return 'reasoning';
     if (trace.startsWith('検索開始:')) return 'search-start';
+    if (trace.startsWith('検索完了')) return 'search-complete';
     if (trace.startsWith('情報取得完了:')) return 'completed';
     if (trace.startsWith('合計トークン数:')) return 'tokens';
     if (trace.startsWith('初期化:')) return 'initial';
@@ -50,7 +51,7 @@ export function StreamingTech() {
       case 'observation': return '👁️';
       case 'reasoning': return '🧠';
       case 'search-start': return '🔍';
-      case 'completed': return '✅';
+      case 'search-complete': return '✅';
       case 'tokens': return '📊';
       case 'initial': return '🚀';
       case 'error': return '⚠️';
@@ -67,6 +68,7 @@ export function StreamingTech() {
       case 'observation': return 'border-purple-500';
       case 'reasoning': return 'border-indigo-500';
       case 'search-start': return 'border-green-500';
+      case 'search-complete': return 'border-teal-500';
       case 'completed': return 'border-green-600';
       case 'tokens': return 'border-green-600';
       case 'initial': return 'border-blue-600';
@@ -194,8 +196,10 @@ export function StreamingTech() {
                     setTraces(prev => [...prev, toolCallTrace]);
                     setTimeout(scrollToBottom, 10);
                   }
-
-                  // 3.ツール結果があれば、別のtool-resultトレースとして追加
+                  continue;
+                } 
+                if (event.traceType === 'tool-results-data') {
+                  // ツール結果データを受け取った場合、ツール結果トレースを追加
                   if (event.toolResultsText) {
                     const fullText = event.toolResultsText;
                     const isLongText = fullText.length > 50;
@@ -207,14 +211,26 @@ export function StreamingTech() {
                       expanded: false, // 初期状態は折りたたみ
                       details: isLongText ? fullText : undefined, // 長い場合のみ詳細を設定
                       timestamp: new Date(),
-                      toolName: event.toolName,
                     };
                     setTraces(prev => [...prev, toolResultTrace]);
                     setTimeout(scrollToBottom, 10);
                   }
                   continue;
-                } 
-                
+                }
+                else if (event.traceType === 'tool-result') {
+                  // tool-resultのイベントが来た場合、「検索完了」を表示
+                  const searchCompleteTrace: TraceItem = {
+                    id: `trace-${Date.now()}-${Math.random().toString(36).slice(2, 11)}-search-complete`,
+                    text: `検索完了`,
+                    type: 'search-complete',
+                    expanded: false,
+                    timestamp: new Date()
+                  };
+                  setTraces(prev => [...prev, searchCompleteTrace]);
+                  setTimeout(scrollToBottom, 10);
+                  continue;
+                }
+
               case 'status':
                 // ステータス情報を追加
                 const statusType = getTraceType(event.content);
@@ -228,7 +244,7 @@ export function StreamingTech() {
                     timestamp: new Date()
                   }
                 ]);
-                setTimeout(scrollToBottom, 10);
+                  setTimeout(scrollToBottom, 10);
                 break;
                 
               case 'usage':
@@ -490,13 +506,6 @@ export function StreamingTech() {
                           </div>
                         )}
                         
-                        {/* 最新のトレースに進行中インジケーター表示 */}
-                        {trace.id === traces[traces.length - 1].id && isLoading && (
-                          <div className="mt-2 w-full bg-gray-700 h-1 rounded-full overflow-hidden">
-                            <div className="bg-green-500 h-1 w-1/3 rounded-full animate-pulse"></div>
-                          </div>
-                        )}
-                        
                         {/* タイムスタンプ表示 */}
                         <div className="mt-1 text-right">
                           <span className="text-xs text-gray-500">
@@ -541,6 +550,10 @@ export function StreamingTech() {
                     <div className="flex items-center">
                       <span className="mr-1">🔍</span>
                       <span className="text-green-400">検索開始</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="mr-1">✓</span>
+                      <span className="text-teal-400">検索完了</span>
                     </div>
                   </div>
                 </div>

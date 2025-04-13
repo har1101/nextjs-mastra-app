@@ -44,9 +44,8 @@ export async function POST(req: NextRequest) {
                     stepInfo.toolCalls?.[0]?.toolName || "Unknown Tool";
                   const query =
                     stepInfo.toolCalls?.[0]?.args.query || "Unknown Query";
-                  const toolResultsText =
-                    stepInfo.toolResults?.[0]?.result.content[0].text ||
-                    "No Tool Results";
+                  
+                  // 初期化トレースを送信
                   controller.enqueue(
                     encoder.encode(
                       JSON.stringify({
@@ -55,10 +54,23 @@ export async function POST(req: NextRequest) {
                         content: "エージェントが処理を開始しました",
                         toolName: toolName,
                         query: query,
-                        toolResultsText: toolResultsText,
                       }) + "\n"
                     )
                   );
+                  
+                  // ツール結果があれば、すぐに別のトレースとして送信（ただし検索完了メッセージなし）
+                  if (stepInfo.toolResults?.[0]?.result.content[0].text) {
+                    const toolResultsText = stepInfo.toolResults[0].result.content[0].text;
+                    controller.enqueue(
+                      encoder.encode(
+                        JSON.stringify({
+                          type: "trace",
+                          traceType: "tool-results-data",  // 新しいトレースタイプを使用
+                          toolResultsText: toolResultsText,
+                        }) + "\n"
+                      )
+                    );
+                  }
                 } else if (stepInfo.stepType === "reasoning") {
                   const reasoningText =
                     stepInfo.reasoningDetails?.join(" ") || stepInfo.text || "";
@@ -69,6 +81,17 @@ export async function POST(req: NextRequest) {
                         type: "trace",
                         traceType: "reasoning",
                         content: reasoningText,
+                      }) + "\n"
+                    )
+                  );
+                } else if (stepInfo.stepType === "tool-result") {
+                  // ツール結果のステップタイプの場合、「検索完了」と出力
+                  controller.enqueue(
+                    encoder.encode(
+                      JSON.stringify({
+                        type: "trace",
+                        traceType: "tool-result",
+                        content: "検索完了",
                       }) + "\n"
                     )
                   );
@@ -123,7 +146,7 @@ export async function POST(req: NextRequest) {
           encoder.encode(
             JSON.stringify({
               type: "status",
-              content: "情報取得完了",
+              content: "出力完了",
             }) + "\n"
           )
         );
@@ -165,6 +188,7 @@ export async function POST(req: NextRequest) {
       "Cache-Control": "no-cache, no-transform",
       "Connection": "keep-alive",
       "Transfer-Encoding": "chunked",
+      "Lambda-Runtime-Function-Response-Mode": "streaming"
     },
   });
 }
