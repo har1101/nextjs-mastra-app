@@ -4,9 +4,10 @@ import { MCPConfiguration } from "@mastra/mcp";
 
 const bedrock = initializeBedrockClient();
 
-const braveMcp = new MCPConfiguration({
+const mcp = new MCPConfiguration({
   id: "brave-search-mcp",
   servers: {
+    // stdio example
     github: {
       command: "npx",
       args: ["-y", "@modelcontextprotocol/server-brave-search"],
@@ -54,9 +55,9 @@ export const blogIdeaAgent = new Agent({
         * 参考資料・リソースの提示方法
 
 `,
-  model: bedrock("us.anthropic.claude-3-haiku-20240307-v1:0"),
-  //model: bedrock("us.anthropic.claude-3-7-sonnet-20250219-v1:0"),
-  tools: await braveMcp.getTools(),
+  //model: bedrock("us.anthropic.claude-3-haiku-20240307-v1:0"),
+  model: bedrock("us.anthropic.claude-3-7-sonnet-20250219-v1:0"),
+  tools: await mcp.getTools(),
 });
 
 // ブログレビュー用のエージェント

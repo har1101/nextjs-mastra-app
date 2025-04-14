@@ -23,7 +23,7 @@ Resources:
           LANGFUSE_SECRET_KEY: put-your-value
           LANGFUSE_BASE_URL: put-your-value
       FunctionUrlConfig:
-        AuthType: NONE
+        AuthType: AWS_IAM
         InvokeMode: RESPONSE_STREAM
     Metadata:
       DockerTag: v1
