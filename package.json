@@ -11,6 +11,7 @@
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "^2.2.5",
     "@ai-sdk/anthropic": "^1.2.6",
+    "@aws-sdk/client-bedrock-agent-runtime": "^3.787.0",
     "@aws-sdk/credential-providers": "^3.782.0",
     "@mastra/core": "^0.8.1",
     "@mastra/mcp": "^0.3.6",

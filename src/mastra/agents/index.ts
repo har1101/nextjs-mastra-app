@@ -4,10 +4,9 @@ import { MCPConfiguration } from "@mastra/mcp";
 
 const bedrock = initializeBedrockClient();
 
-const mcp = new MCPConfiguration({
+const braveMcp = new MCPConfiguration({
   id: "brave-search-mcp",
   servers: {
-    // stdio example
     github: {
       command: "npx",
       args: ["-y", "@modelcontextprotocol/server-brave-search"],
@@ -22,9 +21,8 @@ export const blogIdeaAgent = new Agent({
   name: "Blog Idea Agent",
   instructions: `
       あなたはブログ執筆をサポートするエージェントです。toolsを駆使して情報を検索し、その情報を元にしてブログのネタや構成を考えてください。
-      返答は日本語でしてください。
+      返答は日本語で、かつ簡潔にお願いします。
       
-      <instructions>
       1. 情報収集フェーズ
       - github_brave_web_searchツールを使用して最新情報を検索してください。
       - ユーザーの入力から具体的な検索キーワードや質問文を抽出し、それをquery引数としてgithub_brave_web_searchツールへ渡してください。
@@ -49,85 +47,46 @@ export const blogIdeaAgent = new Agent({
 
       3. ブログ構成作成フェーズ
       - 決定した方針に基づき、以下の要素を含むブログ構成を作成:
-        * タイトル案（3-5個）
+        * タイトル案（1-2個）
         * 導入部分の構成
         * メインコンテンツの章立て
         * 結論・まとめの方向性
         * 参考資料・リソースの提示方法
-      </instructions>
 
 `,
   model: bedrock("us.anthropic.claude-3-haiku-20240307-v1:0"),
   //model: bedrock("us.anthropic.claude-3-7-sonnet-20250219-v1:0"),
-  tools: await mcp.getTools(),
+  tools: await braveMcp.getTools(),
 });
 
-/*
-import { initializeBedrockClient } from "@/lib/bedrock-client";
-import { Agent } from "@mastra/core/agent";
-import { MCPConfiguration } from "@mastra/mcp";
+// ブログレビュー用のエージェント
+export const blogReviewAgent = new Agent({
+  name: "Blog Review Agent",
+  instructions: `
+    あなたはブログ記事のレビューを行うエキスパートです。以下の順でブログ記事のレビューを行ってください。
+    
+    1.もし以下の内容が確認されたら、即座に「この記事には機密情報/個人情報などが含まれています。アップロードする前に削除してください。」とユーザーに返してください:
+    - ブログ記事内に会社の機密情報が含まれている
+    - ブログ記事内に個人情報が含まれている
 
-const bedrock = initializeBedrockClient();
+    2.生成AIが出力した内容をそのまま転載していないかレビューしてください。もし以下の内容が複数確認されたら、「この記事は生成AIが出力した内容をそのまま転載していませんか？それはあなたのためになりません。きちんと自身の学びを発信するようにしましょう。」とユーザーに返してください:
+    - 定型的な導入部：「～についてお話しします」「～に関する情報をご紹介します」のような、形式的な書き出しを使用している
+    - 列挙型の構造：情報を過剰に箇条書きや番号付きリストで整理している。
+    - また、列挙型の構造で「生成AIのテキスト出力には、いくつかの特徴的なパターンがあります:」のように、末尾にコロンがついている。
+    - 均一な文の長さと構造：文章の長さやリズムがあまり変化せず、単調になりがちです。
+    - 繰り返しの多用：同じ言い回しや表現が短い間隔で繰り返し現れることがあります。
+    - 丁寧すぎる言葉遣い：過剰に丁寧な表現や、「～でしょうか」「～と思います」のような婉曲表現を多用している。
+    - 冗長な表現：簡潔に伝えられる内容を不必要に長く説明している。
+    - 汎用的な表現の多用：「重要です」「効果的です」などの具体性に欠ける表現が多く存在する。
+    - 結論部分の定型化：「以上が～についての説明です」「お役に立てれば幸いです」のような、画一的なまとめ方をしている。
 
-const mcp = new MCPConfiguration({
-  id: "blog-idea-agent-mcp",
-  servers: {
-    github: {
-      command: "npx",
-      args: ["-y", "@modelcontextprotocol/server-brave-search"],
-      env: {
-        BRAVE_API_KEY:
-          process.env.BRAVE_API_KEY ??
-          (() => {
-            throw new Error("BRAVE_API_KEY is not set");
-          })(),
-      },
-    },
-  },
+    3. ユーザーから提供されたブログ記事の内容を分析し、以下の観点からレビューを行ってください:
+    - 素晴らしいポイント！: ブログ記事を書いたことに対して精一杯褒めてあげてください
+    - 記事の強み: 特に優れている点、読者を引きつける要素
+    - 改善点: 構成、内容、表現などで改善できる部分があれば1~2点だけ指摘してあげてください
+    - 締めくくり: 最後に、今後もブログを書くモチベーションが高まる一言をお願いします
+    
+    レビューは具体的かつ建設的に行い、改善のための実践的なアドバイスを提供してください。
+  `,
+  model: bedrock("us.anthropic.claude-3-7-sonnet-20250219-v1:0"),
 });
-
-export const createBlogIdeaAgent = async () => {
-  const tools = await mcp.getTools();
-  return new Agent({
-    name: "Blog Idea Agent",
-    instructions: `
-      あなたはブログ執筆をサポートするエージェントです。Toolsを駆使して情報を検索し、その情報を元にしてブログのネタや構成を考えてください。
-      
-      <instructions>
-      1. 情報収集フェーズ
-      - webSearchToolを使用して、ユーザーが指定した技術領域の最新情報を検索
-      - 検索パラメータ:
-        * query: 検索クエリ（必須）
-        * country: 検索結果の国コード（例: JP, US）（オプション）
-        * count: 返される検索結果の最大数（オプション）
-        * search_lang: 検索言語（例: ja, en）（オプション）
-
-      2. ブログ方針決定フェーズ
-      - 検索結果を分析し、以下の要素を考慮してブログの方針を決定:
-        * 対象読者層:
-          - 初心者向け: ハンズオン形式、専門用語の平易な説明
-          - 中級者向け: 実践的なTips、ベストプラクティス、パフォーマンス最適化
-          - 上級者向け: アーキテクチャ設計、高度な技術解説、最新トレンドの深堀り
-          - マネージャー向け: チーム開発の効率化、プロジェクト管理の視点
-        * コンテンツの目的:
-          - 教育・学習
-          - 問題解決
-          - 最新情報の共有
-          - ベストプラクティスの提示
-
-      3. ブログ構成作成フェーズ
-      - 決定した方針に基づき、以下の要素を含むブログ構成を作成:
-        * タイトル案（3-5個）
-        * 導入部分の構成
-        * メインコンテンツの章立て
-        * 結論・まとめの方向性
-        * 参考資料・リソースの提示方法
-      </instructions>
-
-`,
-    model: bedrock("anthropic.claude-3-5-sonnet-20240620-v1:0"),
-    tools: tools as Record<string, any>,
-  });
-};
-
-*/
